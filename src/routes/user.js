@@ -200,7 +200,17 @@ router.get('/allUser', async (req, res) => {
     const has_permission = data.permissions.includes('admin');
 
     if (has_permission) {
-      const allUser = await User.find();
+      let allUser = await User.find();
+      allUser = allUser.map((user) => {
+        return {
+          permissions: user.permissions,
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          active: user.active,
+        };
+      });
       res.json({ err: 0, data: allUser });
     } else {
       res.json({ err: 404, msg: 'Access Denied' });
