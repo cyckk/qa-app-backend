@@ -180,7 +180,7 @@ router.get('/init/:ps', async (req, res) => {
   }
 });
 
-router.get('/get-user/:userID', async (req, res) => {
+router.get('/get-user/:userID', auth, async (req, res) => {
   const userID = req.params.userID;
   try {
     const data = await User.findById({ _id: userID });
@@ -190,7 +190,7 @@ router.get('/get-user/:userID', async (req, res) => {
   }
 });
 
-router.get('/allUser', async (req, res) => {
+router.get('/allUser', auth, async (req, res) => {
   try {
     let token = req.header('Authorization').split('Bearer')[1];
     console.log(token);
