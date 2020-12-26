@@ -9,7 +9,7 @@ const auth = async (req, res, next) => {
   if (verify) {
     next();
   } else {
-    res.json({ err: 1, msg: 'You are not logged in' });
+    res.status(401).json({ err: 1, msg: 'You are not logged in' });
   }
 };
 

@@ -4,9 +4,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-
 import jwt from 'jsonwebtoken';
-
 import user from './routes/user';
 
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -26,7 +24,7 @@ mongoose
   .then(() => {
     console.log('connected to mongodb ');
   })
-  .catch(err => {
+  .catch((err) => {
     console.log('Error while connecting ', err.message);
   });
 

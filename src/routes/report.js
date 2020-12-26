@@ -1,7 +1,5 @@
 import express from 'express';
-
 import auth from './middlewares/auth';
-
 import { Report, Grade } from '../models/report';
 
 export const router = express.Router();
@@ -42,7 +40,7 @@ router.get('/getReport/:reportId', auth, async (req, res) => {
   }
 });
 
-const calculateGrades = questions => {
+const calculateGrades = (questions) => {
   let totalMarks = 0;
   let totalMarksCS = 0;
   let totalMarksP = 0;
@@ -54,7 +52,7 @@ const calculateGrades = questions => {
   let scorePK = 0;
   let scorePR = 0;
   let score = 0;
-  questions.forEach(question => {
+  questions.forEach((question) => {
     //   if (question.category.includes('CS')) {
     //     scoreCS += question.ans == 100 ? 0 : parseInt(question.ans);
     //     totalMarksCS += question.ans == 100 ? 0 : parseInt(question.marks);

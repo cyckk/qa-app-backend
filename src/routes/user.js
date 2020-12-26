@@ -110,7 +110,7 @@ router.post('/addRole', auth, async (req, res) => {
 
     let currentUser = jwt.decode(token);
 
-    currentUser = await User.findOne({ email: user.email });
+    currentUser = await User.findOne({ email: currentUser.email });
 
     if (user.permissions.includes('admin')) {
       let newRole = new Role({
@@ -159,7 +159,7 @@ router.get('/init/:ps', async (req, res) => {
         'add',
       ];
 
-      permissions.forEach(async permission => {
+      permissions.forEach(async (permission) => {
         await Permission.create({
           name: permission,
         });
@@ -177,6 +177,36 @@ router.get('/init/:ps', async (req, res) => {
   } catch (err) {
     console.log('error ', err.message);
     res.json({ err: 1, msg: err.message });
+  }
+});
+
+router.get('/get-user/:userID', async (req, res) => {
+  const userID = req.params.userID;
+  try {
+    const data = await User.findById({ _id: userID });
+    res.json({ err: 0, data: data });
+  } catch (error) {
+    res.status(404).json({ err: 1, message: 'User Not Found' });
+  }
+});
+
+router.get('/allUser', async (req, res) => {
+  try {
+    let token = req.header('Authorization').split('Bearer')[1];
+    console.log(token);
+
+    let currentUser = await jwt.decode(token);
+    const data = await User.findOne({ email: currentUser.email });
+    const has_permission = data.permissions.includes('admin');
+
+    if (has_permission) {
+      const allUser = await User.find();
+      res.json({ err: 0, data: allUser });
+    } else {
+      res.json({ err: 404, msg: 'Access Denied' });
+    }
+  } catch (error) {
+    res.json({ err: 1, error: error.message });
   }
 });
 
