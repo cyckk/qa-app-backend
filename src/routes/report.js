@@ -1,6 +1,7 @@
 import express from 'express';
 import auth from './middlewares/auth';
 import { Report, Grade } from '../models/report';
+import { set } from 'mongoose';
 
 export const router = express.Router();
 
@@ -37,6 +38,23 @@ router.get('/getReport/:reportId', auth, async (req, res) => {
   } catch (error) {
     console.log('error while fetching report ', errror);
     res.json({ err: 1, msg: errro.message });
+  }
+});
+
+router.put('/edit/:ID', async (req, res) => {
+  try {
+    const reportID = req.params.ID;
+    const reportDetails = req.body.reportDetails;
+    const newGrade = calculateGrades(reportDetails.questions);
+    const grade = await Grade.findByIdAndUpdate(reportID, {
+      $set: { newGrade },
+    });
+    const update = await Report.findByIdAndUpdate(reportID, {
+      $set: { reportDetails },
+    });
+    res.json({ err: 0, report: update, grade });
+  } catch (error) {
+    res.status(404).json({ err: 1, msg: error.message });
   }
 });
 
