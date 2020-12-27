@@ -108,12 +108,11 @@ router.post('/addUser', auth, async (req, res) => {
 router.post('/addRole', auth, async (req, res) => {
   try {
     const role = req.body.role;
-
-    let currentUser = jwt.decode(token);
+    let currentUser = jwt.decode(req.token);
 
     currentUser = await User.findOne({ email: currentUser.email });
 
-    if (user.permissions.includes('admin')) {
+    if (currentUser.permissions.includes('admin')) {
       let newRole = new Role({
         name: role,
       });
