@@ -116,9 +116,8 @@ router.post('/addRole', auth, async (req, res) => {
       let newRole = new Role({
         name: role,
       });
-
       newRole = await newRole.save();
-      res.json({ err: 0, role: newRole });
+      res.json({ err: 0, role: newRole, msg: 'New Role Added' });
     } else {
       res.json({ err: 1, msg: 'You dont not have Access Denied' });
     }
