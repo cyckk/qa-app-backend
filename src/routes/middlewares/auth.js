@@ -7,6 +7,7 @@ const auth = async (req, res, next) => {
   const verify = await jwt.verify(token, process.env.JWT_SECRET);
 
   if (verify) {
+    req.token = token;
     next();
   } else {
     res.status(401).json({ err: 1, msg: 'You are not logged in' });

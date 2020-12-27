@@ -1,11 +1,11 @@
 require('dotenv').config();
-
 import express from 'express';
 import mongoose from 'mongoose';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import user from './routes/user';
+import report from './routes/report';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -34,5 +34,6 @@ app.use(cors());
 app.use(bodyParser.json());
 
 app.use(user);
+app.use('/report', report);
 
 export default app;
