@@ -1,10 +1,11 @@
 import express from 'express';
 import auth from './middlewares/auth';
+import jwt from 'jsonwebtoken';
 import { Report, Grade } from '../models/report';
-import { set } from 'mongoose';
 
-export const router = express.Router();
+const router = express.Router();
 
+// Add new Report
 router.post('/addReport', auth, async (req, res) => {
   const reportDetails = req.body.reportDetails;
   try {
@@ -30,6 +31,7 @@ router.post('/addReport', auth, async (req, res) => {
   }
 });
 
+// Get Indivisual Report
 router.get('/getReport/:reportId', auth, async (req, res) => {
   const reportId = req.params.reportId;
   try {
@@ -41,6 +43,7 @@ router.get('/getReport/:reportId', auth, async (req, res) => {
   }
 });
 
+// Edit Indivisual Report
 router.put('/edit/:ID', async (req, res) => {
   try {
     const reportID = req.params.ID;
@@ -49,12 +52,28 @@ router.put('/edit/:ID', async (req, res) => {
     const grade = await Grade.findByIdAndUpdate(reportID, {
       $set: { newGrade },
     });
-    const update = await Report.findByIdAndUpdate(reportID, {
-      $set: { reportDetails },
-    });
+    const update = await Report.findByIdAndUpdate(
+      reportID,
+      {
+        $set: reportDetails,
+      },
+      { new: true }
+    );
     res.json({ err: 0, report: update, grade });
   } catch (error) {
     res.status(404).json({ err: 1, msg: error.message });
+  }
+});
+
+// VIew All Report
+router.get('/allReport', auth, async (req, res) => {
+  // const Token = req.token;
+  // const currentUser = await jwt.decode(Token);
+  try {
+    const report = await Report.find();
+    res.json({ err: 0, report });
+  } catch (error) {
+    res.json({ err: 1, msg: 'SomeThing Went Wrong', error: error.message });
   }
 });
 
@@ -142,3 +161,5 @@ const calculateGrades = (questions) => {
     totalMarksPR,
   };
 };
+
+export default router;

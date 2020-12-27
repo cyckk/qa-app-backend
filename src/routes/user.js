@@ -104,21 +104,20 @@ router.post('/addUser', auth, async (req, res) => {
   }
 });
 
+// Add role
 router.post('/addRole', auth, async (req, res) => {
   try {
     const role = req.body.role;
-
-    let currentUser = jwt.decode(token);
+    let currentUser = jwt.decode(req.token);
 
     currentUser = await User.findOne({ email: currentUser.email });
 
-    if (user.permissions.includes('admin')) {
+    if (currentUser.permissions.includes('admin')) {
       let newRole = new Role({
         name: role,
       });
-
       newRole = await newRole.save();
-      res.json({ err: 0, role: newRole });
+      res.json({ err: 0, role: newRole, msg: 'New Role Added' });
     } else {
       res.json({ err: 1, msg: 'You dont not have Access Denied' });
     }
@@ -133,6 +132,7 @@ router.post('/addRole', auth, async (req, res) => {
   }
 });
 
+//
 router.get('/init/:ps', async (req, res) => {
   try {
     const secret = req.params.ps;
@@ -180,6 +180,7 @@ router.get('/init/:ps', async (req, res) => {
   }
 });
 
+// Get user Info
 router.get('/get-user/:userID', auth, async (req, res) => {
   const userID = req.params.userID;
   try {
@@ -190,6 +191,7 @@ router.get('/get-user/:userID', auth, async (req, res) => {
   }
 });
 
+// Get All User
 router.get('/allUser', auth, async (req, res) => {
   try {
     let token = req.header('Authorization').split('Bearer')[1];
@@ -217,6 +219,49 @@ router.get('/allUser', auth, async (req, res) => {
     }
   } catch (error) {
     res.json({ err: 1, error: error.message });
+  }
+});
+
+// Update Any User
+router.put('/updateUser', auth, async (req, res) => {
+  const Token = req.header('Authorization').split('Bearer')[1];
+  const currentUser = await jwt.decode(Token);
+  const have_updatePermission = currentUser.permissions.includes('admin');
+
+  try {
+    if (have_updatePermission) {
+      const data = req.body;
+      data.password = await bcrypt.hash(data.password, 10);
+      let updateUser = await User.findByIdAndUpdate(
+        data._id,
+        {
+          $set: data,
+        },
+        { new: true }
+      );
+      res.status(200).json({ update: updateUser });
+    } else {
+      res.status(401).json({ err: 0, msg: 'Auth fail' });
+    }
+  } catch (error) {
+    res.json({ err: 1, msg: 'Something Went Wrong', error: error.message });
+  }
+});
+
+router.post('/addPermission', auth, async (req, res) => {
+  const Token = req.header('Authorization').split('Bearer')[1];
+  const currentUser = await jwt.decode(Token);
+
+  try {
+    const have_addPermission = currentUser.permissions.includes('admin');
+    if (have_addPermission) {
+      const permission = await Permission.create(req.body);
+      res.json({ err: 0, msg: 'Permission Created', data: permission });
+    } else {
+      res.status(401).json({ err: 1, msg: 'Auth Fail' });
+    }
+  } catch (error) {
+    res.json({ err: 1, msg: 'Some Went Wrong', error: error.message });
   }
 });
 
