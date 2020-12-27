@@ -220,4 +220,29 @@ router.get('/allUser', auth, async (req, res) => {
   }
 });
 
+router.put('/updateUser', auth, async (req, res) => {
+  const Token = req.header('Authorization').split('Bearer')[1];
+  const currentUser = await jwt.decode(Token);
+  const have_updatePermission = currentUser.permissions.includes('admin');
+
+  try {
+    if (have_updatePermission) {
+      const data = req.body;
+      data.password = await bcrypt.hash(data.password, 10);
+      let updateUser = await User.findByIdAndUpdate(
+        data._id,
+        {
+          $set: data,
+        },
+        { new: true }
+      );
+      res.status(200).json({ update: updateUser });
+    } else {
+      res.status(401).json({ err: 0, msg: 'Auth fail' });
+    }
+  } catch (error) {
+    res.json({ err: 1, msg: 'Something Went Wrong', error: error.message });
+  }
+});
+
 export default router;
