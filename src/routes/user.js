@@ -9,8 +9,9 @@ import { User, Role, Permission } from '../models/user';
 
 const router = express.Router();
 
-router.get('/', () => {
+router.post('/checkAuth', auth, (req, res) => {
   console.log('route handler');
+  res.status(200).send(true);
 });
 
 router.post('/login', async (req, res) => {
@@ -132,6 +133,29 @@ router.post('/addRole', auth, async (req, res) => {
   }
 });
 
+// Get role
+router.get('/getRoles', auth, async (req, res) => {
+  try {
+    const role = req.body.role;
+    let currentUser = jwt.decode(req.token);
+
+    if (currentUser.permissions.includes('admin')) {
+      const roles = await Role.find({});
+      res.json({ err: 0, roles, msg: 'Roles' });
+    } else {
+      res.json({ err: 1, msg: 'Access Denied' });
+    }
+  } catch (error) {
+    if (error.name == 'MongoError') {
+      res.json({ err: 1, msg: 'email already found' });
+    } else if (error.name == 'JsonWebTokenError') {
+      res.json({ err: 1, msg: 'Your Token is not Verified' });
+    } else {
+      res.json({ err: 1, msg: 'something Wrong', errmsg: error });
+    }
+  }
+});
+
 //
 router.get('/init/:ps', async (req, res) => {
   try {
@@ -159,7 +183,7 @@ router.get('/init/:ps', async (req, res) => {
         'add',
       ];
 
-      permissions.forEach(async (permission) => {
+      permissions.forEach(async permission => {
         await Permission.create({
           name: permission,
         });
@@ -181,12 +205,23 @@ router.get('/init/:ps', async (req, res) => {
 });
 
 // Get user Info
-router.get('/get-user/:userID', auth, async (req, res) => {
+router.get('/getUser/:userID', auth, async (req, res) => {
+  console.log('req params ', req.params);
   const userID = req.params.userID;
   try {
-    const data = await User.findById({ _id: userID });
-    res.json({ err: 0, data: data });
+    let user = await User.findById({ _id: userID });
+
+    user = {
+      permissions: user.permissions,
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      active: user.active,
+    };
+    res.json({ err: 0, user });
   } catch (error) {
+    console.log('error ', error);
     res.status(404).json({ err: 1, message: 'User Not Found' });
   }
 });
@@ -203,10 +238,10 @@ router.get('/allUser', auth, async (req, res) => {
 
     if (has_permission) {
       let allUser = await User.find();
-      allUser = allUser.map((user) => {
+      allUser = allUser.map(user => {
         return {
           permissions: user.permissions,
-          _id: user._id,
+          id: user._id,
           name: user.name,
           email: user.email,
           role: user.role,
