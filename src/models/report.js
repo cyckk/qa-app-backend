@@ -27,7 +27,6 @@ const reportSchema = Schema(
     },
     counselor: {
       type: String,
-      required: true,
     },
     teamLead: {
       type: String,
