@@ -1,6 +1,8 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import _ from 'lodash';
+
 import auth from './middlewares/auth';
 
 // import jwt-decode from 'jwt-decode';
@@ -32,7 +34,12 @@ router.post('/login', async (req, res) => {
       if (!passVerified) {
         res.json({ err: 1, msg: 'Email or password is incorrect', user });
       } else {
-        const payload = { email: user.email, permissions: user.permissions };
+        const payload = {
+          id: user._id,
+          email: user.email,
+          permissions: user.permissions,
+          name: user.name,
+        };
         console.log('payload', payload);
         const token = jwt.sign(payload, process.env.JWT_SECRET, {
           expiresIn: '2h',
@@ -162,17 +169,6 @@ router.get('/init/:ps', async (req, res) => {
     const secret = req.params.ps;
     console.log('secret', req.params);
     if (secret == '1o1') {
-      const password = await bcrypt.hash('admin123', 10);
-      const newUser = {
-        name: 'Admin',
-        email: 'admin@datatrained.com',
-        password,
-        role: 'admin',
-        permissions: ['admin', 'viewAll', 'edit', 'add'],
-        active: true,
-      };
-      const user = await User.create(newUser);
-
       let permissions = [
         'admin',
         'viewAll',
@@ -181,6 +177,7 @@ router.get('/init/:ps', async (req, res) => {
         'viewSm',
         'edit',
         'add',
+        'editUser',
       ];
 
       permissions.forEach(async permission => {
@@ -188,6 +185,28 @@ router.get('/init/:ps', async (req, res) => {
           name: permission,
         });
       });
+
+      let dashboardView = [
+        'clock',
+        'auditDone',
+        'recentAudits',
+        'targetAudits',
+        'auditChart',
+        'auditChartCounsellor',
+        'auditChartCounsellorTl',
+      ];
+
+      const password = await bcrypt.hash('admin123', 10);
+      const newUser = {
+        name: 'Admin',
+        email: 'admin@datatrained.com',
+        password,
+        role: 'admin',
+        permissions: ['admin', 'viewAll', 'edit', 'add', 'editUser'],
+        active: true,
+        dashboardView,
+      };
+      const user = await User.create(newUser);
 
       if (user) {
         console.log('done', user);
@@ -218,6 +237,8 @@ router.get('/getUser/:userID', auth, async (req, res) => {
       email: user.email,
       role: user.role,
       active: user.active,
+      dashboardView: user.dashboardView,
+      todaysTarget: user.todaysTarget,
     };
     res.json({ err: 0, user });
   } catch (error) {
@@ -233,8 +254,7 @@ router.get('/allUser', auth, async (req, res) => {
     console.log(token);
 
     let currentUser = await jwt.decode(token);
-    const data = await User.findOne({ email: currentUser.email });
-    const has_permission = data.permissions.includes('admin');
+    const has_permission = currentUser.permissions.includes('admin');
 
     if (has_permission) {
       let allUser = await User.find();
@@ -257,26 +277,98 @@ router.get('/allUser', auth, async (req, res) => {
   }
 });
 
+// Get All Users name and role
+router.get('/allUsersRole', auth, async (req, res) => {
+  try {
+    let allUser = await User.find();
+    allUser = allUser.map(user => {
+      return {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      };
+    });
+    res.json({ err: 0, users: allUser });
+  } catch (error) {
+    res.json({ err: 1, error: error.message });
+  }
+});
+
 // Update Any User
 router.put('/updateUser', auth, async (req, res) => {
   const Token = req.header('Authorization').split('Bearer')[1];
   const currentUser = await jwt.decode(Token);
-  const have_updatePermission = currentUser.permissions.includes('admin');
+  const have_updatePermission = currentUser.permissions.includes('editUser');
 
   try {
     if (have_updatePermission) {
-      const data = req.body;
-      data.password = await bcrypt.hash(data.password, 10);
-      let updateUser = await User.findByIdAndUpdate(
-        data._id,
+      const data = req.body.user;
+      // data.password = await bcrypt.hash(data.password, 10);
+      let updatedUser = await User.findByIdAndUpdate(
+        data.id,
         {
           $set: data,
         },
         { new: true }
       );
-      res.status(200).json({ update: updateUser });
+      updatedUser = {
+        permissions: updatedUser.permissions,
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        active: updatedUser.active,
+        dashboardView: updatedUser.dashboardView,
+        todaysTarget: updatedUser.todaysTarget,
+      };
+      res.status(200).json({ err: 0, update: updatedUser });
     } else {
-      res.status(401).json({ err: 0, msg: 'Auth fail' });
+      res.status(401).json({ err: 0, msg: 'Access Denied' });
+    }
+  } catch (error) {
+    res.json({ err: 1, msg: 'Something Went Wrong', error: error.message });
+  }
+});
+
+// Toggle user account status route
+router.put('/toggleStatus', auth, async (req, res) => {
+  const token = req.token;
+
+  console.log('req body ', req.body);
+
+  try {
+    const currentUser = await jwt.decode(token);
+    const have_updatePermission = currentUser.permissions.includes('admin');
+    if (have_updatePermission) {
+      const id = req.body.payload.id;
+      const active = req.body.payload.active;
+      const toggledStatus = !active;
+      // data.password = await bcrypt.hash(data.password, 10);
+      // const user = await User.findById(id);
+      let updatedUser = await User.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            active: toggledStatus,
+          },
+        },
+        { new: true }
+      );
+
+      updatedUser = {
+        permissions: updatedUser.permissions,
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        active: updatedUser.active,
+        dashboardView: updatedUser.dashboardView,
+      };
+      console.log('updatedUser ', updatedUser);
+      res.status(200).json({ err: 0, user: updatedUser });
+    } else {
+      res.status(401).json({ err: 0, msg: 'Access Denied' });
     }
   } catch (error) {
     res.json({ err: 1, msg: 'Something Went Wrong', error: error.message });
@@ -294,6 +386,72 @@ router.post('/addPermission', auth, async (req, res) => {
       res.json({ err: 0, msg: 'Permission Created', data: permission });
     } else {
       res.status(401).json({ err: 1, msg: 'Auth Fail' });
+    }
+  } catch (error) {
+    res.json({ err: 1, msg: 'Some Went Wrong', error: error.message });
+  }
+});
+
+router.get('/permissions', auth, async (req, res) => {
+  const token = req.token;
+
+  try {
+    const currentUser = await jwt.decode(token);
+    if (currentUser.permissions.includes('admin')) {
+      const permissions = await Permission.find();
+
+      res.json({ err: 0, msg: 'Permissions fetched', permissions });
+    } else {
+      res.status(401).json({ err: 1, msg: 'Access Denied' });
+    }
+  } catch (error) {
+    res.json({ err: 1, msg: 'Some Went Wrong', error: error.message });
+  }
+});
+
+router.put('/setDashboard', auth, async (req, res) => {
+  const token = req.token;
+  const user = req.body.user;
+
+  try {
+    const currentUser = jwt.decode(token);
+
+    if (currentUser.permissions.includes('admin')) {
+      const userToBeUpdated = await User.findById(user.id);
+      let dashboardView = userToBeUpdated.dashboardView;
+
+      if (user.operation == 'add') {
+        dashboardView = _.union(dashboardView, [user.dashboardItem]);
+      }
+      if (user.operation == 'delete') {
+        dashboardView = _.remove(
+          dashboardView,
+          item => item != user.dashboardItem
+        );
+      }
+      let updatedUser = await User.findByIdAndUpdate(
+        user.id,
+        {
+          $set: {
+            dashboardView: dashboardView,
+          },
+        },
+        {
+          new: true,
+        }
+      );
+      updatedUser = {
+        permissions: updatedUser.permissions,
+        id: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        active: updatedUser.active,
+        dashboardView: updatedUser.dashboardView,
+      };
+      res.status(200).json({ err: 0, user: updatedUser });
+    } else {
+      res.status(401).json({ err: 1, msg: 'Access Denied' });
     }
   } catch (error) {
     res.json({ err: 1, msg: 'Some Went Wrong', error: error.message });

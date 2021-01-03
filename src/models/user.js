@@ -24,6 +24,11 @@ const userSchema = Schema({
     },
   ],
   active: Boolean,
+  todaysTarget: Number,
+  dashboardView: {
+    type: [String],
+    default: [],
+  },
 });
 
 const roleSchema = Schema({

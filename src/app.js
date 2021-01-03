@@ -6,6 +6,7 @@ import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import user from './routes/user';
 import report from './routes/report';
+import pdf from './routes/pdf';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -24,7 +25,7 @@ mongoose
   .then(() => {
     console.log('connected to mongodb ');
   })
-  .catch((err) => {
+  .catch(err => {
     console.log('Error while connecting ', err.message);
   });
 
@@ -35,5 +36,6 @@ app.use(bodyParser.json());
 
 app.use(user);
 app.use('/report', report);
+app.use(pdf);
 
 export default app;

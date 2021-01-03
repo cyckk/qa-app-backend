@@ -19,99 +19,102 @@ import mongoose, { Schema } from 'mongoose';
 //   },
 // });
 
-const reportSchema = Schema(
-  {
-    auditor: {
-      type: String,
-      required: true,
-    },
-    counselor: {
-      type: String,
-    },
-    teamLead: {
-      type: String,
-      required: true,
-    },
-    seniorManager: {
-      type: String,
-      required: true,
-    },
-    callDate: {
-      type: String,
-      required: true,
-    },
-    callType: {
-      type: String,
-      required: true,
-    },
-
-    fatalParams: [
-      {
-        ans: {
-          type: Number,
-          required: true,
-        },
-        id: {
-          type: Number,
-          required: true,
-        },
-        ques: {
-          type: String,
-          required: true,
-        },
-        remarks: {
-          type: String,
-        },
-      },
-    ],
-
-    feedback: {
-      type: String,
-      required: true,
-    },
-
-    leadId: {
-      type: String,
-      required: true,
-    },
-    leadPhoneNumber: {
-      type: String,
-      required: true,
-    },
-    leadStage: {
-      type: String,
-      required: true,
-    },
-    result: {
-      type: String,
-      required: true,
-    },
-
-    questions: [
-      {
-        ans: Number,
-        category: {
-          type: String,
-        },
-        id: {
-          type: Number,
-          required: true,
-        },
-        marks: {
-          type: String,
-          required: true,
-        },
-        ques: {
-          type: String,
-          required: true,
-        },
-      },
-    ],
+const reportSchema = Schema({
+  auditor: {
+    type: String,
+    required: true,
   },
-  {
-    timestamps: true,
-  }
-);
+  counselor: {
+    type: String,
+  },
+  teamLead: {
+    type: String,
+    required: true,
+  },
+  seniorManager: {
+    type: String,
+    required: true,
+  },
+  callDate: {
+    type: String,
+    required: true,
+  },
+  callType: {
+    type: String,
+    required: true,
+  },
+
+  fatalParams: [
+    {
+      ans: {
+        type: Number,
+        required: true,
+      },
+      id: {
+        type: Number,
+        required: true,
+      },
+      ques: {
+        type: String,
+        required: true,
+      },
+      remarks: {
+        type: String,
+      },
+    },
+  ],
+
+  feedback: {
+    type: String,
+    required: true,
+  },
+
+  leadId: {
+    type: String,
+    required: true,
+  },
+  leadPhoneNumber: {
+    type: String,
+    required: true,
+  },
+  leadStage: {
+    type: String,
+    required: true,
+  },
+  result: {
+    type: String,
+    required: true,
+  },
+
+  questions: [
+    {
+      ans: Number,
+      category: {
+        type: String,
+      },
+      id: {
+        type: Number,
+        required: true,
+      },
+      marks: {
+        type: String,
+        required: true,
+      },
+      ques: {
+        type: String,
+        required: true,
+      },
+    },
+  ],
+  createdAt: {
+    type: Number,
+    required: true,
+  },
+  updatedAt: {
+    type: Number,
+    required: true,
+  },
+});
 
 const gradeSchema = Schema({
   score: {
